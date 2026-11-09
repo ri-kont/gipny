@@ -54,8 +54,25 @@ fn register_aumid() {
 #[cfg(not(target_os = "windows"))]
 fn register_aumid() {}
 
+#[cfg(target_os = "windows")]
+fn use_bundled_webview2() {
+    if std::env::var_os("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER").is_some() {
+        return;
+    }
+    let Ok(exe) = std::env::current_exe() else { return };
+    let Some(dir) = exe.parent() else { return };
+    let runtime = dir.join("WebView2Runtime");
+    if runtime.join("msedgewebview2.exe").is_file() {
+        std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", runtime);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn use_bundled_webview2() {}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    use_bundled_webview2();
     register_aumid();
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     gipny_libcore::security::harden_process();

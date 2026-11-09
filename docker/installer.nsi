@@ -30,32 +30,31 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
 
-Function CheckWebView2
+Function InstallWebView2
     ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
     ${If} $0 != ""
+        DetailPrint "WebView2 Runtime already present ($0) — skipping bundled installer"
         Return
     ${EndIf}
     ReadRegStr $0 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
     ${If} $0 != ""
+        DetailPrint "WebView2 Runtime already present ($0) — skipping bundled installer"
         Return
     ${EndIf}
     ReadRegStr $0 HKCU "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
     ${If} $0 != ""
+        DetailPrint "WebView2 Runtime already present ($0) — skipping bundled installer"
         Return
     ${EndIf}
 
-    DetailPrint "WebView2 Runtime not found — downloading bootstrapper..."
     SetOutPath "$PLUGINSDIR"
-    inetc::get "https://go.microsoft.com/fwlink/p/?LinkId=2124703" "$PLUGINSDIR\MicrosoftEdgeWebview2Setup.exe" /END
-    Pop $0
-    ${If} $0 != "OK"
-        MessageBox MB_OK|MB_ICONEXCLAMATION "Could not download WebView2 Runtime.$\nPlease install manually from:$\nhttps://developer.microsoft.com/microsoft-edge/webview2/"
-        Return
-    ${EndIf}
-    DetailPrint "Installing WebView2 Runtime..."
-    ExecWait '"$PLUGINSDIR\MicrosoftEdgeWebview2Setup.exe" /silent /install' $0
+    File "/oname=webview2_setup.exe" "${WV2_SETUP}"
+    DetailPrint "Installing WebView2 Runtime (bundled, ~1 min)..."
+    ExecWait '"$PLUGINSDIR\webview2_setup.exe" /silent /install' $0
     ${If} $0 != 0
-        MessageBox MB_OK|MB_ICONEXCLAMATION "WebView2 Runtime install returned code $0. You may need to install it manually."
+        MessageBox MB_OK|MB_ICONEXCLAMATION "WebView2 Runtime installer returned code $0.$\ngipny may fail to start — re-run this setup or install WebView2 manually from Microsoft."
+    ${Else}
+        DetailPrint "WebView2 Runtime installed"
     ${EndIf}
 FunctionEnd
 
@@ -65,7 +64,7 @@ Section "Install"
     File "${DLL_PATH}"
     File /oname=app.ico "${ICON_PATH}"
 
-    Call CheckWebView2
+    Call InstallWebView2
 
     CreateDirectory "$SMPROGRAMS\${APP_NAME}"
     CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\app.ico"

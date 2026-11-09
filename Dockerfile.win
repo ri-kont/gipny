@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential pkg-config curl ca-certificates git \
     gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 \
     nodejs npm file wget zip unzip perl make nsis \
+    p7zip-full cabextract msitools \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
